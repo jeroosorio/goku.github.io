@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memoria Histórica: Conflicto Armado por Departamentos</title>
+    <style>
+        :root {
+            --primary-color: #7f1d1d;
+            --secondary-color: #111827;
+            --accent-color: #b91c1c;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--secondary-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 800px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #4b5563;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Contenedor del Mapa e Interactividad */
+        .map-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .map-wrapper {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .map-wrapper img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        /* Pines Interactivos sobre el Mapa */
+        .map-pin {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background-color: var(--accent-color);
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 8px rgba(0,0,0,0.5);
+        }
+
+        .map-pin:hover {
+            background-color: #111827;
+            transform: translate(-50%, -50%) scale(1.5);
+            z-index: 20;
+        }
+
+        .map-pin::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        /* Panel de Control de Departamentos */
+        .info-section {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .selector-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .selector-box label {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #374151;
+        }
+
+        .depto-select {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .depto-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        /* Tarjeta de Información Dinámica */
+        .report-card {
+            background: #fff8f8;
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .report-card h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            border-bottom: 1px solid #fee2e2;
+            padding-bottom: 8px;
+        }
+
+        .report-card p {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #1f2937;
+        }
+
+        .btn-link {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            transition: background-color 0.2s;
+            margin-top: 15px;
+        }
+
+        .btn-link:hover {
+            background-color: var(--accent-color);
+        }
+
+        /* Grid rápido para accesibilidad */
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 5px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #f9fafb;
+        }
+
+        .quick-grid button {
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 6px;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: all 0.15s;
+        }
+
+        .quick-grid button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 0.85rem;
+            color: #9ca3af;
+            text-align: center;
+        }
+
+        @media (max-width: 850px) {
+            .main-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Conflicto Armado en Colombia: Cartografía de la Memoria</h1>
+        <p>Haz clic en los puntos rojos directamente sobre el mapa o utiliza el panel lateral para explorar la historia y archivos de prensa/investigación verificados de cada territorio.</p>
+    </header>
+
+    <div class="main-container">
+        
+        <div class="map-section">
+            <div class="map-wrapper" id="mapWrapper">
+                <img src="pene.jpg" alt="Mapa de Colombia Interactivo">
+            </div>
+            <p style="font-size:0.8rem; color:#9ca3af; margin-top:8px;">Haz clic en los marcadores del mapa territorial</p>
+        </div>
+
+        <div class="info-section">
+            
+            <div class="selector-box">
+                <label for="deptoDropdown">Selecciona un Departamento:</label>
+                <select id="deptoDropdown" class="depto-select" onchange="actualizarInfo(this.value)">
+                </select>
+            </div>
+
+            <div class="selector-box">
+                <label>Acceso rápido por orden alfabético:</label>
+                <div id="quickGrid" class="quick-grid">
+                </div>
+            </div>
+
+            <div class="report-card" id="reportCard">
+                <div>
+                    <h2 id="cardTitle">Selecciona una región</h2>
+                    <p id="cardDesc">Haz clic en cualquier punto rojo del mapa o búscalo en la lista para cargar su memoria histórica e impactos del conflicto armado.</p>
+                </div>
+                <a id="cardLink" href="#" target="_blank" class="btn-link" style="display: none;">Ver Investigaciones y Archivos del Departamento</a>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        Fuentes recopiladas de portales estables de memoria histórica: Centro Nacional de Memoria Histórica, Verdad Abierta, Rutas del Conflicto y JEP.
+    </footer>
+
+    <script>
+        // BASE DE DATOS ACTUALIZADA CON ENLACES DE BÚSQUEDA 100% SEGUROS (EVITA ERRORES 404)
+        const conflictoData = {
+            "amazonas": {
+                nombre: "Amazonas",
+                top: "88%", left: "68%",
+                desc: "Región afectada por el control de corredores fluviales para el narcotráfico. El impacto recayó fuertemente sobre las comunidades indígenas originarias, sufriendo reclutamiento forzado, aculturación y rupturas de sus dinámicas ancestrales por grupos guerrilleros y bandas criminales transfronterizas.",
+                link: "https://verdadabierta.com/?s=Amazonas"
+            },
+            "antioquia": {
+                nombre: "Antioquia",
+                top: "35%", left: "38%",
+                desc: "Uno de los epicentros más dolorosos de la guerra en Colombia. Marcado por la fuerte confrontación entre las FARC, el ELN, el auge de las estructuras paramilitares (AUC) en Urabá y el Oriente antioqueño, y operaciones militares conjuntas. Dejó miles de víctimas de desaparición forzada, masacres y despojo de tierras.",
+                link: "https://verdadabierta.com/?s=Antioquia"
+            },
+            "arauca": {
+                nombre: "Arauca",
+                top: "37%", left: "73%",
+                desc: "Zona fronteriza históricamente disputada por la guerra fratricida entre el ELN y las disidencias de las FARC. La población civil ha quedado atrapada en medio de confinamientos forzados, atentados a la infraestructura petrolera, asesinatos selectivos de líderes sociales y constante estigmatización.",
+                link: "https://verdadabierta.com/?s=Arauca"
+            },
+            "atlantico": {
+                nombre: "Atlántico",
+                top: "10%", left: "42%",
+                desc: "Aunque menos afectado por frentes de guerra abiertos, Atlántico sufrió dinámicas de control económico y sicariato urbano a manos del Bloque Norte de las AUC. Barranquilla operó como centro logístico de lavado de activos y sufrió el asesinato sistemático de defensores de derechos humanos y sindicalistas.",
+                link: "https://verdadabierta.com/?s=Atl%C3%A1ntico"
+            },
+            "bogota": {
+                nombre: "Bogotá D.C.",
+                top: "54%", left: "51%",
+                desc: "La capital actuó como receptora masiva de millones de desplazados forzados de todo el país. Asimismo, vivió de cerca el impacto del conflicto mediante atentados terroristas urbanos, tomas en zonas rurales periféricas (como el Sumapaz) y el fenómeno de ejecuciones extrajudiciales ('falsos positivos') reflejado en localidades como Soacha.",
+                link: "https://centrodememoriahistorica.gov.co/?s=Bogota"
+            },
+            "bolivar": {
+                nombre: "Bolívar",
+                top: "22%", left: "48%",
+                desc: "Sufrió con fiereza la violencia en la subregión de los Montes de María, escenario de algunas de las masacres paramilitares más brutales de la historia del país (como El Salado y Mampuján). El conflicto destruyó el tejido social campesino y provocó éxodos masivos hacia Cartagena y el interior.",
+                link: "https://verdadabierta.com/?s=Bol%C3%ADvar"
+            },
+            "boyaca": {
+                nombre: "Boyacá",
+                top: "46%", left: "57%",
+                desc: "Vivió la incursión de los frentes de las FARC y el ELN en sus provincias fronterizas, sumado a la violenta arremetida paramilitar de las Autodefensas Campesinas de Casanare y el Bloque Central Bolívar en las zonas esmeralderas y el occidente del departamento, generando masacres masivas encubiertas.",
+                link: "https://centrodememoriahistorica.gov.co/?s=Boyaca"
+            },
+            "caldas": {
+                nombre: "Caldas",
+                top: "46%", left: "40%",
+                desc: "El eje cafetero caldense padeció las incursiones del frente 47 de las FARC y la posterior y sanguinaria contrarremetida del Frente Cacique Pipintá de las AUC, que sembró el terror en municipios como Riosucio y Samaná mediante desapariciones, masacres y persecución a comunidades indígenas Embera Chamí.",
+                link: "https://centrodememoriahistorica.gov.co/?s=Caldas"
+            },
+            "caqueta": {
+                nombre: "Caquetá",
+                top: "74%", left: "46%",
+                desc: "Bastión histórico de la guerrilla de las FARC y epicentro de la implementación de la política de seguridad estatal conocida como el Plan Patriota. Sus selvas y campos vivieron décadas de bombardeos, minas antipersonales, secuestros de uniformados y políticos, y un severo impacto ambiental derivado de las fumigaciones.",
+                link: "https://verdadabierta.com/?s=Caquet%C3%A1"
+            },
+            "casanare": {
+                nombre: "Casanare",
+                top: "48%", left: "68%",
+                desc: "Los Llanos Orientales padecieron la cruenta guerra interna entre facciones paramilitares opuestas (las 'Asociaciones Campesinas' de Martín Llanos contra el Bloque Centauros). Además, fue una de las regiones con tasas más críticas en investigaciones por ejecuciones extrajudiciales ('falsos positivos') a manos del Ejército.",
+                link: "https://verdadabierta.com/?s=Casanare"
+            },
+            "cauca": {
+                nombre: "Cauca",
+                top: "64%", left: "29%",
+                desc: "Un territorio en conflicto permanente. La confluencia de guerrillas, paramilitares y carteles de narcotráfico por el control del cañón del Micay y las rutas hacia el Pacífico ha causado una crisis humanitaria crónica, afectando gravemente los cabildos indígenas Nasa y la soberanía de sus guardias ancestrales.",
+                link: "https://verdadabierta.com/?s=Cauca"
+            },
+            "cesar": {
+                nombre: "Cesar",
+                top: "14%", left: "56%",
+                desc: "Devastado por el accionar del Bloque Norte de las AUC al mando de alias 'Jorge 40'. El conflicto estuvo fuertemente ligado al despojo de tierras de comunidades campesinas para favorecer megaproyectos carboníferos y ganaderos, destruyendo la seguridad alimentaria y autonomía de la región.",
+                link: "https://verdadabierta.com/?s=Cesar"
+            },
+            "choco": {
+                nombre: "Chocó",
+                top: "44%", left: "24%",
+                desc: "Una de las crisis humanitarias más severas del Pacífico colombiano. El abandono estatal crónico agudizó los efectos de las masacres (como Bojayá en 2002), los confinamientos de pueblos afro e indígenas Embera por disputas territoriales entre el ELN y el Clan del Golfo por rutas de narcotráfico y minería ilegal.",
+                link: "https://verdadabierta.com/?s=Choc%C3%B3"
+            },
+            "cordoba": {
+                nombre: "Córdoba",
+                top: "22%", left: "33%",
+                desc: "Considerado la cuna histórica del paramilitarismo moderno en Colombia bajo las casas de los hermanos Castaño (ACCU). La población rural experimentó un despojo masivo de tierras, asesinatos selectivos de líderes agrarios y un control social asfixiante que permeó las institutions políticas locales.",
+                link: "https://verdadabierta.com/?s=C%C3%B3rdoba"
+            },
+            "cundinamarca": {
+                nombre: "Cundinamarca",
+                top: "51%", left: "48%",
+                desc: "Sufrió el cerco estratégico de las FARC que intentó presionar militarmente a la capital desde las provincias del Sumapaz y el Tequendama, respondido con feroces operaciones militares (como la Operación Libertad Uno) que desplazaron a miles de familias de las zonas andinas.",
+                link: "https://verdadabierta.com/?s=Cundinamarca"
+            },
+            "guainia": {
+                nombre: "Guainía",
+                top: "61%", left: "86%",
+                desc: "Territorio de selva profunda afectado por la imposición de economías de guerra asociadas al tráfico de estupefacientes y la extracción ilegal de coltán y oro. Las comunidades indígenas sufrieron violaciones sistemáticas a su autonomía territorial por el control de rutas fluviales fronterizas.",
+                link: "https://centrodememoriahistorica.gov.co/?s=Guainia"
+            },
+            "guaviare": {
+                nombre: "Guaviare",
+                top: "66%", left: "64%",
+                desc: "Región fuertemente golpeada por los cultivos declarados ilícitos y la colonización armada. Vivió tomas guerrilleras de gran magnitud (como la de Miraflores) y la posterior estigmatización de sus campesinos a través de intensas campañas de erradicación forzada y fumigación con glifosato.",
+                link: "https://verdadabierta.com/?s=Guaviare"
+            },
+            "huila": {
+                nombre: "Huila",
+                top: "63%", left: "38%",
+                desc: "Territorio golpeado por las acciones de la columna móvil Teófilo Forero de las FARC, que perpetró secuestros extorsivos de gran impacto, hostigamientos a cascos urbanos y ataques a la infraestructura, dejando un saldo trágico de desplazamiento forzado interno hacia Neiva.",
+                link: "https://centrodememoriahistorica.gov.co/?s=Huila"
+            },
+            "la-guajira": {
+                nombre: "La Guajira",
+                top: "5%", left: "60%",
+                desc: "Sufrió incursiones paramilitares brutales dirigidas al control de los puertos informales y el contrabando, destacando la Masacre de Bahía Portete contra el pueblo Wayúu. El conflicto destruyó tejidos comunitarios indígenas matriarcales e impuso barreras económicas severas.",
+                link: "https://verdadabierta.com/?s=Guajira"
+            },
+            "magdalena": {
+                nombre: "Magdalena",
+                top: "10%", left: "50%",
+                desc: "Marcado por la violencia generalizada en la Sierra Nevada de Santa Marta y la Zona Bananera. Frentes paramilitares de Hernán Giraldo y 'Jorge 40' sometieron a la población a violencia sexual sistemática, control de la vida cotidiana, homicidios de líderes y despojo territorial masivo.",
+                link: "https://verdadabierta.com/?s=Magdalena"
+            },
+            "meta": {
+                nombre: "Meta",
+                top: "58%", left: "58%",
+                desc: "Puerta de entrada a los Llanos Orientales, vivió las consecuencias directas de la fallida Zona de Distensión de San Vicente del Caguán, el exterminio político de los miembros de la Unión Patriótica (UP) y la cruda violencia del Bloque Centauros de las AUC.",
+                link: "https://verdadabierta.com/?s=Meta"
+            },
+            "narino": {
+                nombre: "Nariño",
+                top: "72%", left: "20%",
+                desc: "El Pacífico nariñense y municipios como Tumaco se convirtieron en uno de los focos de violencia más complejos del país debido a los cultivos de coca, minería ilegal y disputas sangrientas entre disidencias de las FARC, ELN y bandas criminales que afectan a comunidades afro e indígenas Awá.",
+                link: "https://verdadabierta.com/?s=Nari%C3%B1o"
+            },
+            "norte-de-santander": {
+                nombre: "Norte de Santander",
+                top: "29%", left: "58%",
+                desc: "La subregión del Catatumbo sigue siendo escenario de una de las guerras más prolongadas del país entre el ELN, el EPL y disidencias. La población ha resistido masacres fronterizas, campos minados, y el azote histórico del Bloque Catatumbo de las AUC que dejó miles de desaparecidos.",
+                link: "https://verdadabierta.com/?s=Norte+de+Santander"
+            },
+            "putumayo": {
+                nombre: "Putumayo",
+                top: "78%", left: "32%",
+                desc: "Región petrolera y cocalera fuertemente golpeada por el Bloque Sur de las FARC y la posterior incursión paramilitar del Bloque Sur Putumayo (AUC), financiados por el narcotráfico. La población civil sufrió masacres continuas (como El Placer y La Hormiga) y persecución acérrima.",
+                link: "https://verdadabierta.com/?s=Putumayo"
+            },
+            "quindio": {
+                nombre: "Quindío",
+                top: "50%", left: "39%",
+                desc: "Aunque de menor intensidad armada directa en comparación con sus vecinos, el departamento experimentó dinámicas de extorsión, homicidios selectivos y control micro-económico por parte de redes sicariales, bandas criminales emergentes y frentes de las AUC del Eje Cafetero.",
+                link: "https://centrodememoriahistorica.gov.co/?s=Quindio"
+            },
+            "risaralda": {
+                nombre: "Risaralda",
+                top: "47%", left: "37%",
+                desc: "Sufrió los estragos de la violencia mediante el accionar del Frente 47 de las FARC en sus límites con el Chocó, sumado a las redes de narcotráfico del Cartel del Norte del Valle y las bandas criminales herederas del paramilitarismo (como 'Cordillera'), que golpearon con fuerza sus zonas vulnerables urbanas.",
+                link: "https://centrodememoriahistorica.gov.co/?s=Risaralda"
+            },
+            "san-andres": {
+                nombre: "San Andrés y Providencia",
+                top: "10%", left: "15%",
+                desc: "El conflicto impactó al archipiélago a través de su posicionamiento geoestratégico en las rutas transnacionales del narcotráfico. Esto introdujo armas, dinámicas sicariales antes ajenas a las islas, desapariciones de lancheros raizales en el mar y el lavado de activos que alteró la economía local.",
+                link: "https://centrodememoriahistorica.gov.co/?s=San+Andres"
+            },
+            "santander": {
+                nombre: "Santander",
+                top: "37%", left: "52%",
+                desc: "Marcado por la violencia política e histórica en el Magdalena Medio y Barrancabermeja. La población urbana y obrera resistió por décadas las confrontaciones armadas del ELN y las FARC, seguidas por una violenta toma y purga urbana ejecutada por el Bloque Central Bolívar de las AUC.",
+                link: "https://verdadabierta.com/?s=Santander"
+            },
+            "sucre": {
+                nombre: "Sucre",
+                top: "18%", left: "42%",
+                desc: "Padeció la alianza criminal entre políticos locales y paramilitares del Bloque Héroes de los Montes de María (fenómeno de la 'Parapolítica'). Masacres espantosas como la de Chengue, Macayepo y El Salado destruyeron comunidades campesinas enteras, desplazando la población a las periferias urbanas.",
+                link: "https://verdadabierta.com/?s=Sucre"
+            },
+            "tolima": {
+                nombre: "Tolima",
+                top: "54%", left: "43%",
+                desc: "Cuna fundacional del conflicto armado contemporáneo en Colombia tras las operaciones militares sobre Marquetalia en los años 60 que dieron origen a las FARC. Por décadas, sus zonas rurales andinas sufrieron hostigamientos, tomas de pueblos y posterior presencia del Bloque Tolima de las AUC.",
+                link: "https://verdadabierta.com/?s=Tolima"
+            },
+            "valle-del-cauca": {
+                nombre: "Valle del Cauca",
+                top: "56%", left: "30%",
+                desc: "Golpeado por carteles de la droga mafiosos y la masiva incursión paramilitar del Bloque Calima, autor de masacres continuadas a lo largo del río Naya. Hechos históricos desgarradores como los asesinatos sistemáticos de la Masacre de Trujillo marcaron profundamente la memoria de la región.",
+                link: "https://verdadabierta.com/?s=Valle+del+Cauca"
+            },
+            "vaupes": {
+                nombre: "Vaupés",
+                top: "72%", left: "76%",
+                desc: "Vivió uno de los episodios bélicos más cruentos de la historia de Colombia: la Toma de Mitú en 1998 por parte de las FARC, que dejó decenas de policías muertos, secuestrados y destruyó el casco urbano, rompiendo la paz de las comunidades indígenas nativas mayoritarias en la región.",
+                link: "https://centrodememoriahistorica.gov.co/?s=Vaupes"
+            },
+            "vichada": {
+                nombre: "Vichada",
+                top: "49%", left: "80%",
+                desc: "Extenso territorio llanero oriental disputado para el cultivo, procesamiento de coca y control de pistas aéreas clandestinas por frentes de las FARC y grupos paramilitares, dejando comunidades despojadas, indígenas desplazados y altos índices de violencia invisible por la lejanía geográfica.",
+                link: "https://verdadabierta.com/?s=Vichada"
+            }
+        };
+
+        // FUNCIÓN INICIALIZADORA PARA CARGAR LA INTERFAZ Y LOS PINES DEL MAPA
+        function iniciarProyecto() {
+            const dropdown = document.getElementById("deptoDropdown");
+            const quickGrid = document.getElementById("quickGrid");
+            const mapWrapper = document.getElementById("mapWrapper");
+            
+            dropdown.innerHTML = '<option value="">-- Elige un Departamento --</option>';
+
+            const clavesOrdenadas = Object.keys(conflictoData).sort((a, b) => 
+                conflictoData[a].nombre.localeCompare(conflictoData[b].nombre)
+            );
+
+            clavesOrdenadas.forEach(clave => {
+                const depto = conflictoData[clave];
+                
+                // 1. Añadir al menú desplegable
+                const opt = document.createElement("option");
+                opt.value = clave;
+                opt.textContent = depto.nombre;
+                dropdown.appendChild(opt);
+
+                // 2. Añadir botón rápido
+                const btn = document.createElement("button");
+                btn.textContent = depto.nombre;
+                btn.type = "button";
+                btn.onclick = () => {
+                    dropdown.value = clave;
+                    actualizarInfo(clave);
+                };
+                quickGrid.appendChild(btn);
+
+                // 3. Crear Pin Interactivo sobre el mapa wrapper
+                if (depto.top && depto.left) {
+                    const pin = document.createElement("button");
+                    pin.className = "map-pin";
+                    pin.style.top = depto.top;
+                    pin.style.left = depto.left;
+                    pin.title = `Ver: ${depto.nombre}`;
+                    
+                    pin.onclick = () => {
+                        dropdown.value = clave;
+                        actualizarInfo(clave);
+                        
+                        if (window.innerWidth < 850) {
+                            document.getElementById("reportCard").scrollIntoView({ behavior: 'smooth' });
+                        }
+                    };
+                    mapWrapper.appendChild(pin);
+                }
+            });
+        }
+
+        // FUNCIÓN DINÁMICA QUE CAMBIA LA INFORMACIÓN EN LA PANTALLA
+        function actualizarInfo(idDepartamento) {
+            const card = document.getElementById("reportCard");
+            const title = document.getElementById("cardTitle");
+            const desc = document.getElementById("cardDesc");
+            const linkBtn = document.getElementById("cardLink");
+
+            if (!idDepartamento || !conflictoData[idDepartamento]) {
+                title.textContent = "Selecciona una región";
+                desc.textContent = "Haz clic en cualquier punto rojo del mapa o búscalo en la lista para cargar su memoria histórica e impactos del conflicto armado.";
+                linkBtn.style.display = "none";
+                card.style.background = "#fff8f8";
+                return;
+            }
+
+            const data = conflictoData[idDepartamento];
+            card.style.opacity = 0;
+            
+            setTimeout(() => {
+                title.textContent = `Conflicto Armado en: ${data.nombre}`;
+                desc.textContent = data.desc;
+                linkBtn.href = data.link;
+                linkBtn.style.display = "inline-block";
+                card.style.background = "#ffffff";
+                card.style.opacity = 1;
+            }, 150);
+        }
+
+        window.onload = iniciarProyecto;
+    </script>
+</body>
+</html>
